@@ -2697,4 +2697,5 @@ const questions = [
     B: "Tunnel vision is a late form of visual field loss, but the broader and more accurate answer is visual field loss.",
     C: "Halos are more related to corneal oedema and raised intraocular pressure, not direct evidence of optic nerve damage."
   }
-};
+}
+];
