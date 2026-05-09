@@ -15,6 +15,14 @@ const scoreText = document.getElementById("score-text");
 const reviewBox = document.getElementById("review-box");
 
 function loadQuestion() {
+  if (typeof questions === "undefined" || questions.length === 0) {
+    questionText.textContent = "Questions could not be loaded. Please check questions.js.";
+    prevBtn.style.display = "none";
+    nextBtn.style.display = "none";
+    submitBtn.style.display = "none";
+    return;
+  }
+
   const q = questions[currentQuestion];
 
   questionNumber.textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
@@ -36,7 +44,7 @@ function loadQuestion() {
   }
 
   document.querySelectorAll("input[name='answer']").forEach(input => {
-    input.addEventListener("change", function() {
+    input.addEventListener("change", function () {
       userAnswers[currentQuestion] = this.value;
     });
   });
@@ -46,21 +54,21 @@ function loadQuestion() {
   submitBtn.style.display = currentQuestion === questions.length - 1 ? "inline-block" : "none";
 }
 
-nextBtn.addEventListener("click", function() {
+nextBtn.addEventListener("click", function () {
   if (currentQuestion < questions.length - 1) {
     currentQuestion++;
     loadQuestion();
   }
 });
 
-prevBtn.addEventListener("click", function() {
+prevBtn.addEventListener("click", function () {
   if (currentQuestion > 0) {
     currentQuestion--;
     loadQuestion();
   }
 });
 
-submitBtn.addEventListener("click", function() {
+submitBtn.addEventListener("click", function () {
   let score = 0;
 
   questions.forEach((q, index) => {
@@ -104,7 +112,7 @@ function reviewAnswers() {
       <ul>
         ${Object.keys(q.options).map(key => {
           if (key !== correctAnswer) {
-            return `<li><strong>${key}. ${q.options[key]}:</strong> ${q.rationalesIncorrect[key]}</li>`;
+            return `<li><strong>${key}. ${q.options[key]}:</strong> ${q.rationalesIncorrect[key] || "No rationale provided."}</li>`;
           }
           return "";
         }).join("")}
