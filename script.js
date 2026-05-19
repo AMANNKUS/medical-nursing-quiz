@@ -1,6 +1,8 @@
 let currentQuestion = 0;
 let userAnswers = {};
-
+let quizSubmitted = false;
+const TIME_LIMIT_MINUTES = 180;
+let timeRemaining = TIME_LIMIT_MINUTES * 60;
 const questionNumber = document.getElementById("question-number");
 const questionText = document.getElementById("question-text");
 const optionsBox = document.getElementById("options");
@@ -13,7 +15,30 @@ const quizBox = document.getElementById("quiz-box");
 const resultBox = document.getElementById("result-box");
 const scoreText = document.getElementById("score-text");
 const reviewBox = document.getElementById("review-box");
+function startTimer() {
+  const timerDisplay = document.getElementById("timer");
 
+  const countdown = setInterval(function () {
+    if (quizSubmitted) {
+      clearInterval(countdown);
+      return;
+    }
+
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+
+    timerDisplay.textContent = `Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+
+    if (timeRemaining <= 0) {
+      clearInterval(countdown);
+      alert("Time is up! Your quiz will be submitted automatically.");
+      submitQuiz();
+      return;
+    }
+
+    timeRemaining--;
+  }, 1000);
+}
 function loadQuestion() {
   if (typeof questions === "undefined" || questions.length === 0) {
     questionText.textContent = "Questions could not be loaded. Please check questions.js.";
@@ -68,7 +93,11 @@ prevBtn.addEventListener("click", function () {
   }
 });
 
-submitBtn.addEventListener("click", function () {
+function submitQuiz() {
+  if (quizSubmitted) return;
+
+  quizSubmitted = true;
+
   let score = 0;
 
   questions.forEach((q, index) => {
@@ -81,7 +110,9 @@ submitBtn.addEventListener("click", function () {
   resultBox.classList.remove("hidden");
 
   scoreText.textContent = `You scored ${score} out of ${questions.length}`;
-});
+}
+
+submitBtn.addEventListener("click", submitQuiz);
 
 function reviewAnswers() {
   resultBox.classList.add("hidden");
@@ -124,3 +155,4 @@ function reviewAnswers() {
 }
 
 loadQuestion();
+startTimer();
