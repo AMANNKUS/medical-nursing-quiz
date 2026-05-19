@@ -1,38 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pre-NMC Trial Quiz</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-
   <div class="quiz-container">
-    <h1>Pre-NMC Trial Quiz</h1>
-    <p id="course-title">Medical Nursing Practice Questions</p>
-    <div id="timer">Time Left: 180:00</div>
 
-    <div id="quiz-box">
-      <h2 id="question-number"></h2>
-      <p id="question-text"></p>
+    <header class="quiz-header">
+      <h1>Pre-NMC Trial Quiz</h1>
+      <p id="course-title">Medical Nursing Practice Questions</p>
+    </header>
 
-      <div id="options"></div>
+    <section id="start-screen" class="start-card">
+      <h2>Quiz Instructions</h2>
 
-      <div class="buttons">
-        <button id="prev-btn">Previous</button>
-        <button id="next-btn">Next</button>
-        <button id="submit-btn">Submit Quiz</button>
+      <div class="quiz-info">
+        <p><strong>Course:</strong> Medical Nursing</p>
+        <p><strong id="total-questions-label">Questions:</strong></p>
+        <p><strong>Time:</strong> 180 minutes</p>
+        <p><strong>Instruction:</strong> Select the best answer for each question.</p>
+        <p><strong>Note:</strong> Do not refresh the page after starting the quiz.</p>
       </div>
-    </div>
 
-    <div id="result-box" class="hidden">
-      <h2>Your Score</h2>
-      <p id="score-text"></p>
-      <button onclick="reviewAnswers()">Review Answers</button>
-    </div>
+      <button id="start-btn" class="primary-btn">Start Quiz</button>
+    </section>
 
-    <div id="review-box" class="hidden"></div>
+    <section id="quiz-screen" class="hidden">
+
+      <div class="top-bar">
+        <div id="timer">Time Left: 180:00</div>
+        <div id="progress-text">Question 1 of 180</div>
+      </div>
+
+      <div class="progress-container">
+        <div id="progress-bar"></div>
+      </div>
+
+      <div id="question-nav"></div>
+
+      <div id="quiz-box">
+        <h2 id="question-number"></h2>
+        <p id="question-text"></p>
+
+        <div id="options"></div>
+
+        <div class="buttons">
+          <button id="prev-btn">Previous</button>
+          <button id="next-btn">Next</button>
+          <button id="submit-btn">Submit Quiz</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="result-box" class="hidden">
+      <h2>Your Result</h2>
+      <div id="result-summary"></div>
+      <button id="review-btn" class="primary-btn">Review Answers</button>
+    </section>
+
+    <section id="review-box" class="hidden"></section>
+
+    <footer class="quiz-footer">
+      Prepared for Nursing Licensure Examination Revision
+    </footer>
+
   </div>
 
   <script src="questions.js"></script>

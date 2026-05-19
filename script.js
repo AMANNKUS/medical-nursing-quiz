@@ -1,8 +1,15 @@
 let currentQuestion = 0;
 let userAnswers = {};
 let quizSubmitted = false;
+
 const TIME_LIMIT_MINUTES = 180;
 let timeRemaining = TIME_LIMIT_MINUTES * 60;
+let timerInterval = null;
+
+const startScreen = document.getElementById("start-screen");
+const quizScreen = document.getElementById("quiz-screen");
+const startBtn = document.getElementById("start-btn");
+
 const questionNumber = document.getElementById("question-number");
 const questionText = document.getElementById("question-text");
 const optionsBox = document.getElementById("options");
@@ -11,46 +18,70 @@ const prevBtn = document.getElementById("prev-btn");
 const nextBtn = document.getElementById("next-btn");
 const submitBtn = document.getElementById("submit-btn");
 
-const quizBox = document.getElementById("quiz-box");
 const resultBox = document.getElementById("result-box");
-const scoreText = document.getElementById("score-text");
+const resultSummary = document.getElementById("result-summary");
+const reviewBtn = document.getElementById("review-btn");
 const reviewBox = document.getElementById("review-box");
-function startTimer() {
-  const timerDisplay = document.getElementById("timer");
 
-  const countdown = setInterval(function () {
+const timerDisplay = document.getElementById("timer");
+const progressText = document.getElementById("progress-text");
+const progressBar = document.getElementById("progress-bar");
+const questionNav = document.getElementById("question-nav");
+const totalQuestionsLabel = document.getElementById("total-questions-label");
+
+function initializeQuiz() {
+  if (typeof questions === "undefined" || questions.length === 0) {
+    startScreen.innerHTML = `
+      <h2>Questions could not be loaded</h2>
+      <p>Please check your questions.js file.</p>
+    `;
+    return;
+  }
+
+  totalQuestionsLabel.textContent = `Questions: ${questions.length}`;
+  createQuestionNavigation();
+}
+
+function startQuiz() {
+  startScreen.classList.add("hidden");
+  quizScreen.classList.remove("hidden");
+
+  loadQuestion();
+  startTimer();
+}
+
+function startTimer() {
+  updateTimerDisplay();
+
+  timerInterval = setInterval(function () {
     if (quizSubmitted) {
-      clearInterval(countdown);
+      clearInterval(timerInterval);
       return;
     }
 
-    const minutes = Math.floor(timeRemaining / 60);
-    const seconds = timeRemaining % 60;
-
-    timerDisplay.textContent = `Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-
     if (timeRemaining <= 0) {
-      clearInterval(countdown);
+      clearInterval(timerInterval);
       alert("Time is up! Your quiz will be submitted automatically.");
-      submitQuiz();
+      submitQuiz(true);
       return;
     }
 
     timeRemaining--;
+    updateTimerDisplay();
   }, 1000);
 }
-function loadQuestion() {
-  if (typeof questions === "undefined" || questions.length === 0) {
-    questionText.textContent = "Questions could not be loaded. Please check questions.js.";
-    prevBtn.style.display = "none";
-    nextBtn.style.display = "none";
-    submitBtn.style.display = "none";
-    return;
-  }
 
+function updateTimerDisplay() {
+  const minutes = Math.floor(timeRemaining / 60);
+  const seconds = timeRemaining % 60;
+
+  timerDisplay.textContent = `Time Left: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+}
+
+function loadQuestion() {
   const q = questions[currentQuestion];
 
-  questionNumber.textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
+  questionNumber.textContent = `Question ${currentQuestion + 1}`;
   questionText.textContent = q.question;
 
   optionsBox.innerHTML = "";
@@ -71,12 +102,60 @@ function loadQuestion() {
   document.querySelectorAll("input[name='answer']").forEach(input => {
     input.addEventListener("change", function () {
       userAnswers[currentQuestion] = this.value;
+      updateQuestionNavigation();
+      updateProgress();
     });
   });
 
   prevBtn.style.display = currentQuestion === 0 ? "none" : "inline-block";
   nextBtn.style.display = currentQuestion === questions.length - 1 ? "none" : "inline-block";
-  submitBtn.style.display = currentQuestion === questions.length - 1 ? "inline-block" : "none";
+  submitBtn.style.display = "inline-block";
+
+  updateProgress();
+  updateQuestionNavigation();
+}
+
+function updateProgress() {
+  const answeredCount = Object.keys(userAnswers).length;
+  const totalQuestions = questions.length;
+  const progressPercent = ((currentQuestion + 1) / totalQuestions) * 100;
+
+  progressText.textContent = `Question ${currentQuestion + 1} of ${totalQuestions} | Answered: ${answeredCount}`;
+  progressBar.style.width = `${progressPercent}%`;
+}
+
+function createQuestionNavigation() {
+  questionNav.innerHTML = "";
+
+  questions.forEach((_, index) => {
+    const btn = document.createElement("button");
+    btn.textContent = index + 1;
+    btn.className = "nav-btn";
+
+    btn.addEventListener("click", function () {
+      currentQuestion = index;
+      loadQuestion();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    questionNav.appendChild(btn);
+  });
+}
+
+function updateQuestionNavigation() {
+  const navButtons = document.querySelectorAll(".nav-btn");
+
+  navButtons.forEach((btn, index) => {
+    btn.classList.remove("current", "answered");
+
+    if (userAnswers[index]) {
+      btn.classList.add("answered");
+    }
+
+    if (index === currentQuestion) {
+      btn.classList.add("current");
+    }
+  });
 }
 
 nextBtn.addEventListener("click", function () {
@@ -93,10 +172,25 @@ prevBtn.addEventListener("click", function () {
   }
 });
 
-function submitQuiz() {
+function confirmSubmit() {
+  const answeredCount = Object.keys(userAnswers).length;
+  const unansweredCount = questions.length - answeredCount;
+
+  const confirmMessage =
+    `Are you sure you want to submit?\n\n` +
+    `Answered: ${answeredCount} out of ${questions.length}\n` +
+    `Unanswered: ${unansweredCount}`;
+
+  if (confirm(confirmMessage)) {
+    submitQuiz(false);
+  }
+}
+
+function submitQuiz(autoSubmitted) {
   if (quizSubmitted) return;
 
   quizSubmitted = true;
+  clearInterval(timerInterval);
 
   let score = 0;
 
@@ -106,13 +200,48 @@ function submitQuiz() {
     }
   });
 
-  quizBox.classList.add("hidden");
+  const totalQuestions = questions.length;
+  const answeredCount = Object.keys(userAnswers).length;
+  const unanswered = totalQuestions - answeredCount;
+  const wrongAnswers = answeredCount - score;
+  const percentage = ((score / totalQuestions) * 100).toFixed(1);
+  const timeUsedSeconds = TIME_LIMIT_MINUTES * 60 - timeRemaining;
+  const timeUsed = formatTime(timeUsedSeconds);
+  const grade = getGrade(percentage);
+
+  quizScreen.classList.add("hidden");
   resultBox.classList.remove("hidden");
 
-  scoreText.textContent = `You scored ${score} out of ${questions.length}`;
+  resultSummary.innerHTML = `
+    <div class="result-card">
+      <p><strong>Score:</strong> ${score} / ${totalQuestions}</p>
+      <p><strong>Percentage:</strong> ${percentage}%</p>
+      <p><strong>Grade:</strong> ${grade}</p>
+      <p><strong>Correct Answers:</strong> ${score}</p>
+      <p><strong>Wrong Answers:</strong> ${wrongAnswers}</p>
+      <p><strong>Unanswered:</strong> ${unanswered}</p>
+      <p><strong>Time Used:</strong> ${timeUsed}</p>
+      <p><strong>Submission:</strong> ${autoSubmitted ? "Automatically submitted when time ended" : "Submitted by student"}</p>
+    </div>
+  `;
 }
 
-submitBtn.addEventListener("click", submitQuiz);
+function formatTime(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  return `${minutes} minutes ${remainingSeconds} seconds`;
+}
+
+function getGrade(percentage) {
+  percentage = Number(percentage);
+
+  if (percentage >= 80) return "Excellent";
+  if (percentage >= 70) return "Very Good";
+  if (percentage >= 60) return "Good";
+  if (percentage >= 50) return "Fair";
+  return "Needs More Revision";
+}
 
 function reviewAnswers() {
   resultBox.classList.add("hidden");
@@ -154,5 +283,8 @@ function reviewAnswers() {
   });
 }
 
-loadQuestion();
-startTimer();
+startBtn.addEventListener("click", startQuiz);
+submitBtn.addEventListener("click", confirmSubmit);
+reviewBtn.addEventListener("click", reviewAnswers);
+
+initializeQuiz();
